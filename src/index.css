@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import '@syncfusion/ej2-base/styles/material.css';
+@import '@syncfusion/ej2-buttons/styles/material.css';
+@import '@syncfusion/ej2-inputs/styles/material.css';
+@import '@syncfusion/ej2-lists/styles/material.css';
+@import '@syncfusion/ej2-navigations/styles/material.css';
+@import '@syncfusion/ej2-popups/styles/material.css';
+@import '@syncfusion/ej2-splitbuttons/styles/material.css';
+@import '@syncfusion/ej2-dropdowns/styles/material.css';
+@import '@syncfusion/ej2-richtexteditor/styles/material.css';
+@import '@syncfusion/ej2-documenteditor/styles/material.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 38% 98%;
+    --foreground: 218 35% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 218 35% 14%;
+    --primary: 211 92% 47%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 95%;
+    --secondary-foreground: 218 35% 16%;
+    --muted: 211 28% 93%;
+    --muted-foreground: 223 11% 42%;
+    --accent: 210 85% 92%;
+    --accent-foreground: 218 35% 16%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 32 100% 15%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --border: 214 28% 86%;
+    --input: 214 28% 86%;
+    --ring: 211 92% 47%;
+    --radius: 0.8rem;
+  }
+
+  .dark {
+    --background: 220 20% 9%;
+    --foreground: 210 33% 96%;
+    --card: 221 24% 12%;
+    --card-foreground: 210 33% 96%;
+    --primary: 208 96% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 219 18% 18%;
+    --secondary-foreground: 210 33% 95%;
+    --muted: 219 18% 16%;
+    --muted-foreground: 217 12% 68%;
+    --accent: 219 16% 22%;
+    --accent-foreground: 210 33% 95%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 32 100% 15%;
+    --success: 142 69% 58%;
+    --success-foreground: 0 0% 100%;
+    --border: 218 16% 24%;
+    --input: 218 16% 24%;
+    --ring: 208 96% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 0 0, hsl(198 92% 88% / 0.45), transparent 45%),
+      radial-gradient(circle at 100% 0, hsl(214 95% 84% / 0.35), transparent 40%);
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at 0 0, hsl(205 92% 32% / 0.2), transparent 50%),
+      radial-gradient(circle at 100% 0, hsl(220 88% 28% / 0.2), transparent 50%);
+  }
+
+  .template-editor .e-rte-toolbar {
+    border: 0 !important;
+    border-bottom: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.6rem 0.6rem 0 0;
+    background: hsl(var(--secondary) / 0.55);
+  }
+
+  .template-editor .e-rte-content {
+    min-height: 460px;
+  }
+
+  .template-editor .e-rte-content .e-content {
+    min-height: 460px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .doc-preview-frame {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    max-height: calc(100vh - 200px);
+    min-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .doc-preview-page {
+    margin: 0 auto;
+    max-width: 794px;
+    min-height: auto;
+    background: white;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* Compact Syncfusion DOCX editor chrome (top ribbon + side panes). */
+  #template-word-editor .e-de-ctnr-toolbar,
+  #generate-docx-preview .e-de-ctnr-toolbar,
+  #template-word-editor .e-de-tlbr-wrapper,
+  #generate-docx-preview .e-de-tlbr-wrapper,
+  #template-word-editor .e-de-toolbar.e-toolbar .e-toolbar-items,
+  #generate-docx-preview .e-de-toolbar.e-toolbar .e-toolbar-items {
+    height: 58px;
+  }
+
+  #template-word-editor .e-de-showhide-btn,
+  #generate-docx-preview .e-de-showhide-btn,
+  #template-word-editor .e-de-showhide-btn-rtl,
+  #generate-docx-preview .e-de-showhide-btn-rtl {
+    height: 58px;
+  }
+
+  #template-word-editor .e-de-toolbar.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn,
+  #generate-docx-preview .e-de-toolbar.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn {
+    height: calc(100% - 8px);
+    padding-bottom: 2px;
+  }
+
+  #template-word-editor .e-de-toolbar.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn .e-tbar-btn-text,
+  #generate-docx-preview .e-de-toolbar.e-toolbar .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn .e-tbar-btn-text {
+    font-size: 11px;
+    margin: 0 5px;
+  }
+
+  #template-word-editor .e-de-op,
+  #generate-docx-preview .e-de-op,
+  #template-word-editor .e-de-restrict-pane,
+  #generate-docx-preview .e-de-restrict-pane {
+    width: 240px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  #template-word-editor .e-de-prop-pane,
+  #generate-docx-preview .e-de-prop-pane {
+    width: 220px;
+  }
+
+  #template-word-editor .e-de-review-pane,
+  #generate-docx-preview .e-de-review-pane {
+    width: 320px;
+  }
+
+  #template-word-editor,
+  #generate-docx-preview,
+  #template-word-editor .e-de-ctn,
+  #generate-docx-preview .e-de-ctn {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Centre the document page inside the preview viewer. */
+  #generate-docx-preview .e-de-container-row {
+    display: flex;
+    justify-content: center;
+  }
+
+  #template-word-editor .e-de-tlbr-wrapper,
+  #generate-docx-preview .e-de-tlbr-wrapper {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  #template-word-editor .e-de-toolbar.e-toolbar {
+    min-width: max-content;
+  }
+
+  #generate-docx-preview .e-de-toolbar.e-toolbar {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #generate-docx-preview .e-documenteditorcontainer,
+  #generate-docx-preview .e-de-ctn,
+  #generate-docx-preview .e-de-ctnr {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #generate-docx-preview .e-de-tlbr-wrapper,
+  #generate-docx-preview .e-de-status-bar,
+  #generate-docx-preview .e-de-ctnr-properties-pane,
+  #generate-docx-preview .e-de-prop-pane,
+  #generate-docx-preview .e-de-op,
+  #generate-docx-preview .e-de-review-pane,
+  #generate-docx-preview .e-de-restrict-pane {
+    display: none !important;
+  }
+
+}
