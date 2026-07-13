@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DocumentEditorContainerComponent, Toolbar as DocumentEditorToolbar } from '@syncfusion/ej2-react-documenteditor'
-import { Copy, Files, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Copy, Files, Pencil, Plus, Search, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -144,14 +144,17 @@ export function TemplatesPage() {
       const payload = { name: values.name, description: values.description, format: 'sfdt', sfdt, content: '' }
       if (editingTemplate) {
         updateTemplate(editingTemplate.id, payload)
+        toast({ message: `"${values.name}" updated successfully.`, variant: 'success' })
       } else {
         addTemplate(payload)
+        toast({ message: `"${values.name}" saved successfully.`, variant: 'success' })
       }
       cancelEdit()
     } catch {
       setImportMessage('Could not save this template. Please try again.')
+      toast({ message: 'Could not save this template. Please try again.', variant: 'destructive' })
     }
-  }, [wordEditorRef, isEditorLoading, editingTemplate, updateTemplate, addTemplate, cancelEdit])
+  }, [wordEditorRef, isEditorLoading, editingTemplate, updateTemplate, addTemplate, cancelEdit, toast])
 
   const handleFormSubmit = useCallback((e) => handleSubmit(onSubmit)(e), [handleSubmit, onSubmit])
 
@@ -181,17 +184,38 @@ export function TemplatesPage() {
   }
 
   return (
-    <section className="space-y-5 animate-fade-in">
-      <div className="grid gap-5 lg:grid-cols-[300px_1fr]">
+    <section className="space-y-6 animate-fade-in" aria-labelledby="templates-title">
+      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Sparkles className="size-3.5" />
+              Template workspace
+            </div>
+            <h1 id="templates-title" className="text-xl font-semibold tracking-tight">Templates</h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Build reusable document templates with placeholder controls and DOCX-native editing.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" onClick={openCreate}>
+              <Plus className="size-4" />
+              New template
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)_250px]">
         {/* Template list */}
-        <Card>
+        <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <CardTitle>Templates</CardTitle>
                 <CardDescription>Manage your document templates.</CardDescription>
               </div>
-              <Button type="button" size="sm" onClick={openCreate}>
+              <Button type="button" size="sm" onClick={openCreate} className="xl:hidden">
                 <Plus className="size-4" />
                 New
               </Button>
@@ -262,7 +286,7 @@ export function TemplatesPage() {
 
         {/* Editor area */}
         <div className="min-w-0">
-          <Card>
+          <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>
                 {editingTemplate ? 'Edit template' : editingId === 'new' ? 'Create template' : 'Template editor'}
@@ -356,6 +380,29 @@ export function TemplatesPage() {
             </CardContent>
           </Card>
         </div>
+
+        <aside className="xl:sticky xl:top-24 xl:h-fit">
+          <Card className="border-border/70">
+            <CardHeader>
+              <CardTitle className="text-base">Template Health</CardTitle>
+              <CardDescription>Maintain reusable and reliable template content.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-3">
+                <span className="text-foreground">Total templates</span>
+                <strong>{templates.length}</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-3">
+                <span className="text-foreground">Visible results</span>
+                <strong>{filteredTemplates.length}</strong>
+              </div>
+              <p className="inline-flex items-start gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="size-3.5 shrink-0" />
+                Add clear descriptions and keep placeholders standardized for faster generation and fewer review errors.
+              </p>
+            </CardContent>
+          </Card>
+        </aside>
       </div>
 
       {/* Delete confirmation */}

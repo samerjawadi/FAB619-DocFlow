@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DocumentEditorContainerComponent, Toolbar as DocumentEditorToolbar } from '@syncfusion/ej2-react-documenteditor'
-import { BookmarkCheck, CheckCircle2, Files, PanelRightClose, PanelRightOpen, Printer, Search } from 'lucide-react'
+import { BookmarkCheck, CheckCircle2, Files, PanelRightClose, PanelRightOpen, Printer, Search, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label'
@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/badge'
 import { useAppData } from '../hooks/use-app-data'
 import { useDebounce } from '../hooks/use-debounce'
 import { useSettings } from '../hooks/use-settings'
+import { useToast } from '../context/toast-context'
 import { renderTemplate } from '../utils/render-template'
 import { cn } from '../utils/cn'
 
@@ -183,6 +184,7 @@ function OptionSwitch({ title, description, checked, disabled, onToggle }) {
 
 export function GeneratePage() {
   const { templates, workers, upsertHistoryEntry } = useAppData()
+  const { toast } = useToast()
   const [templateId, setTemplateId] = useState('')
   const [workerId, setWorkerId] = useState('')
   const [templateQuery, setTemplateQuery] = useState('')
@@ -416,6 +418,7 @@ export function GeneratePage() {
   const saveToHistoryManually = () => {
     saveToHistory()
     setSavedMessage('Saved to history.')
+    toast({ message: 'Saved to history.', variant: 'success', duration: 3000 })
     setTimeout(() => setSavedMessage(''), 3000)
   }
 
@@ -461,7 +464,27 @@ export function GeneratePage() {
   const hasNoWorkers = workers.length === 0
 
   return (
-    <section className="space-y-5 animate-fade-in">
+    <section className="space-y-6 animate-fade-in" aria-labelledby="generate-title">
+      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Sparkles className="size-3.5" />
+              Document generation studio
+            </div>
+            <h1 id="generate-title" className="text-xl font-semibold tracking-tight">Generate</h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Select template and user, review output, then print or save with minimal friction.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={isTemplateSelected ? 'success' : 'muted'}>{isTemplateSelected ? 'Template selected' : 'Select template'}</Badge>
+            <Badge variant={isWorkerSelected ? 'success' : 'muted'}>{isWorkerSelected ? 'User selected' : 'Select user'}</Badge>
+            <Badge variant={canGenerate ? 'default' : 'muted'}>{canGenerate ? 'Ready to export' : 'Setup required'}</Badge>
+          </div>
+        </div>
+      </div>
+
       {/* Step progress indicator */}
       <div className="flex items-center rounded-xl border border-border/70 bg-card/80 px-4 py-3">
         <StepItem
@@ -488,7 +511,7 @@ export function GeneratePage() {
 
       <div className={cn('grid gap-5', isSetupPanelCollapsed ? 'xl:grid-cols-1' : 'xl:grid-cols-[1fr_360px]')}>
         {/* Preview card — shown second on mobile (order-2), first on xl */}
-        <Card className="min-w-0 order-2 xl:order-1">
+        <Card className="min-w-0 order-2 border-border/70 shadow-sm xl:order-1">
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -609,9 +632,9 @@ export function GeneratePage() {
 
         {/* Setup panel — shown first on mobile */}
         {!isSetupPanelCollapsed && (
-          <aside className="min-w-0 space-y-5 order-1 xl:order-2 xl:sticky xl:top-0 xl:h-screen xl:overflow-y-auto xl:pr-1">
+          <aside className="min-w-0 space-y-5 order-1 xl:order-2 xl:sticky xl:top-0 xl:h-screen xl:overflow-y-auto xl:pr-1" aria-label="Generation setup panel">
             {/* Options */}
-            <Card>
+            <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-sm">Options</CardTitle>
               </CardHeader>
@@ -634,7 +657,7 @@ export function GeneratePage() {
             </Card>
 
             {/* Step 1: Template */}
-            <Card>
+            <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <span className={cn('flex size-5 items-center justify-center rounded-full text-xs font-bold', isTemplateSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>
@@ -689,7 +712,7 @@ export function GeneratePage() {
             </Card>
 
             {/* Step 2: Worker */}
-            <Card>
+            <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <span className={cn('flex size-5 items-center justify-center rounded-full text-xs font-bold', isWorkerSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>
@@ -755,7 +778,7 @@ export function GeneratePage() {
             </Card>
 
             {/* Step 3: Document data */}
-            <Card>
+            <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <span className={cn('flex size-5 items-center justify-center rounded-full text-xs font-bold', canGenerate ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>
@@ -832,6 +855,19 @@ export function GeneratePage() {
             </Card>
           </aside>
         )}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/70 bg-background/95 p-3 backdrop-blur xl:hidden">
+        <div className="mx-auto flex max-w-xl items-center gap-2">
+          <Button type="button" className="flex-1" onClick={printDocument} disabled={!canGenerate}>
+            <Printer className="size-4" />
+            Print / PDF
+          </Button>
+          <Button type="button" variant="outline" className="flex-1" onClick={saveToHistoryManually} disabled={!canGenerate}>
+            <BookmarkCheck className="size-4" />
+            Save
+          </Button>
+        </div>
       </div>
     </section>
   )

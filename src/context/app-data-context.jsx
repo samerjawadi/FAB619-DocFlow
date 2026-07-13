@@ -81,11 +81,20 @@ export function AppDataProvider({ children }) {
     })
   }, [history, historyHydrated])
 
+  const isWorkersLoading = !workersHydrated
+  const isTemplatesLoading = !templatesHydrated
+  const isHistoryLoading = !historyHydrated
+  const isLoading = isWorkersLoading || isTemplatesLoading || isHistoryLoading
+
   const value = useMemo(
     () => ({
       workers,
       templates,
       history,
+      isWorkersLoading,
+      isTemplatesLoading,
+      isHistoryLoading,
+      isLoading,
       addWorker(payload) {
         setWorkers((previous) => [...previous, { id: createId('w'), ...payload }])
       },
@@ -161,7 +170,7 @@ export function AppDataProvider({ children }) {
         setHistory((previous) => previous.filter((entry) => entry.id !== id))
       },
     }),
-    [workers, templates, history],
+    [workers, templates, history, isWorkersLoading, isTemplatesLoading, isHistoryLoading, isLoading],
   )
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>

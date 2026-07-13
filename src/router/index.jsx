@@ -2,10 +2,10 @@
 import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '../layouts/app-layout'
-import { WorkersPage } from '../pages/workers-page'
 import { NotFoundPage } from '../pages/not-found-page'
 
 const GeneratePage  = lazy(() => import('../pages/generate-page').then((m) => ({ default: m.GeneratePage })))
+const WorkersPage  = lazy(() => import('../pages/workers-page').then((m) => ({ default: m.WorkersPage })))
 const TemplatesPage = lazy(() => import('../pages/templates-page').then((m) => ({ default: m.TemplatesPage })))
 const HistoryPage   = lazy(() => import('../pages/history-page').then((m) => ({ default: m.HistoryPage })))
 const SettingsPage  = lazy(() => import('../pages/settings-page').then((m) => ({ default: m.SettingsPage })))
