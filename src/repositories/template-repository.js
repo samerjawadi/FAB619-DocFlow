@@ -1,29 +1,10 @@
 import { defaultTemplates } from '../data/default-templates'
 import { collection, deleteDoc, doc, getDocs, query, writeBatch } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from '../lib/firebase-client'
+import { canUseRemoteCollection, markCollectionUnavailable } from './firebase-sync-utils'
 
 const STORAGE_KEY = 'fab619-docflow-templates-v4'
-let isFirestoreUnavailable = false
-
-function markFirestoreUnavailable(error) {
-  const message = String(error?.message || '')
-  const code = String(error?.code || '')
-  const isMissingDatabase = message.includes("Database '(default)' not found")
-  const isPermissionDenied = code.includes('permission-denied') || message.includes('Missing or insufficient permissions')
-
-  if (!isMissingDatabase && !isPermissionDenied) {
-    return
-  }
-
-  if (!isFirestoreUnavailable) {
-    if (isPermissionDenied) {
-      console.warn('Firestore access denied by security rules. Falling back to local storage.')
-    } else {
-      console.warn('Firestore is not initialized for this Firebase project. Falling back to local storage.')
-    }
-  }
-  isFirestoreUnavailable = true
-}
+const REMOTE_COLLECTION = 'templates'
 
 function listFromLocalStorage() {
   const raw = window.localStorage.getItem(STORAGE_KEY)
@@ -69,12 +50,12 @@ function toFirebaseTemplate(template) {
 
 export const templateRepository = {
   async list() {
-    if (!isFirebaseConfigured || !db || isFirestoreUnavailable) {
+    if (!isFirebaseConfigured || !db || !canUseRemoteCollection(REMOTE_COLLECTION)) {
       return listFromLocalStorage()
     }
 
     try {
-      const templatesRef = query(collection(db, 'templates'))
+      const templatesRef = query(collection(db, REMOTE_COLLECTION))
       const snapshot = await getDocs(templatesRef)
       const templates = snapshot.docs
         .map((entry) => normalizeTemplate({ id: entry.id, ...entry.data() }))
@@ -87,7 +68,7 @@ export const templateRepository = {
       saveToLocalStorage(templates)
       return templates
     } catch (error) {
-      markFirestoreUnavailable(error)
+      markCollectionUnavailable(REMOTE_COLLECTION, error)
       console.error('Could not load templates from database, using local cache.', error)
       return listFromLocalStorage()
     }
@@ -96,28 +77,28 @@ export const templateRepository = {
   async save(templates) {
     saveToLocalStorage(templates)
 
-    if (!isFirebaseConfigured || !db || isFirestoreUnavailable) {
+    if (!isFirebaseConfigured || !db || !canUseRemoteCollection(REMOTE_COLLECTION)) {
       return
     }
 
     try {
-      const templatesCollection = collection(db, 'templates')
+      const templatesCollection = collection(db, REMOTE_COLLECTION)
       const remoteSnapshot = await getDocs(templatesCollection)
       const remoteIds = new Set(remoteSnapshot.docs.map((entry) => entry.id))
       const localIds = new Set(templates.map((template) => template.id))
 
       const batch = writeBatch(db)
       templates.forEach((template) => {
-        const reference = doc(db, 'templates', template.id)
+        const reference = doc(db, REMOTE_COLLECTION, template.id)
         batch.set(reference, toFirebaseTemplate(template), { merge: true })
       })
 
       await batch.commit()
 
       const idsToDelete = Array.from(remoteIds).filter((id) => !localIds.has(id))
-      await Promise.all(idsToDelete.map((id) => deleteDoc(doc(db, 'templates', id))))
+      await Promise.all(idsToDelete.map((id) => deleteDoc(doc(db, REMOTE_COLLECTION, id))))
     } catch (error) {
-      markFirestoreUnavailable(error)
+      markCollectionUnavailable(REMOTE_COLLECTION, error)
       console.error('Could not save templates to database.', error)
     }
   },

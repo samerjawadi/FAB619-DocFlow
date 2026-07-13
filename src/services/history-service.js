@@ -1,11 +1,11 @@
 import { historyRepository } from '../repositories/history-repository'
 
 export const historyService = {
-  listEntries() {
+  async listEntries() {
     return historyRepository.list()
   },
 
-  saveEntries(entries) {
-    historyRepository.save(entries)
+  async saveEntries(entries) {
+    return historyRepository.save(entries)
   },
 }

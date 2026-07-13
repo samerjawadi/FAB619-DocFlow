@@ -50,6 +50,12 @@ service cloud.firestore {
     match /templates/{templateId} {
       allow read, write: if true;
     }
+    match /workers/{workerId} {
+      allow read, write: if true;
+    }
+    match /history/{entryId} {
+      allow read, write: if true;
+    }
   }
 }
 ```

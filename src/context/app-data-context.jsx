@@ -11,29 +11,49 @@ function createId(prefix) {
 }
 
 export function AppDataProvider({ children }) {
-  const [workers, setWorkers] = useState(() => workerService.listWorkers())
+  const [workers, setWorkers] = useState([])
+  const [workersHydrated, setWorkersHydrated] = useState(false)
   const [templates, setTemplates] = useState([])
   const [templatesHydrated, setTemplatesHydrated] = useState(false)
-  const [history, setHistory] = useState(() => historyService.listEntries())
+  const [history, setHistory] = useState([])
+  const [historyHydrated, setHistoryHydrated] = useState(false)
 
   useEffect(() => {
     let isMounted = true
 
-    async function loadTemplates() {
-      try {
-        const items = await templateService.listTemplates()
-        if (!isMounted) return
-        setTemplates(items)
-      } catch (error) {
-        console.error('Could not load templates.', error)
-      } finally {
-        if (isMounted) {
-          setTemplatesHydrated(true)
-        }
+    async function loadInitialData() {
+      const [workersResult, templatesResult, historyResult] = await Promise.allSettled([
+        workerService.listWorkers(),
+        templateService.listTemplates(),
+        historyService.listEntries(),
+      ])
+
+      if (!isMounted) return
+
+      if (workersResult.status === 'fulfilled') {
+        setWorkers(workersResult.value)
+      } else {
+        console.error('Could not load workers.', workersResult.reason)
       }
+
+      if (templatesResult.status === 'fulfilled') {
+        setTemplates(templatesResult.value)
+      } else {
+        console.error('Could not load templates.', templatesResult.reason)
+      }
+
+      if (historyResult.status === 'fulfilled') {
+        setHistory(historyResult.value)
+      } else {
+        console.error('Could not load history.', historyResult.reason)
+      }
+
+      setWorkersHydrated(true)
+      setTemplatesHydrated(true)
+      setHistoryHydrated(true)
     }
 
-    loadTemplates()
+    loadInitialData()
 
     return () => {
       isMounted = false
@@ -41,8 +61,11 @@ export function AppDataProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    workerService.saveWorkers(workers)
-  }, [workers])
+    if (!workersHydrated) return
+    workerService.saveWorkers(workers).catch((error) => {
+      console.error('Could not persist workers.', error)
+    })
+  }, [workers, workersHydrated])
 
   useEffect(() => {
     if (!templatesHydrated) return
@@ -52,8 +75,11 @@ export function AppDataProvider({ children }) {
   }, [templates, templatesHydrated])
 
   useEffect(() => {
-    historyService.saveEntries(history)
-  }, [history])
+    if (!historyHydrated) return
+    historyService.saveEntries(history).catch((error) => {
+      console.error('Could not persist history.', error)
+    })
+  }, [history, historyHydrated])
 
   const value = useMemo(
     () => ({

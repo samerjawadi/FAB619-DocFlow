@@ -1,11 +1,11 @@
 import { workerRepository } from '../repositories/worker-repository'
 
 export const workerService = {
-  listWorkers() {
+  async listWorkers() {
     return workerRepository.list()
   },
 
-  saveWorkers(workers) {
-    workerRepository.save(workers)
+  async saveWorkers(workers) {
+    return workerRepository.save(workers)
   },
 }
