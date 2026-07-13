@@ -3,16 +3,18 @@ import { navigationItems } from '../../data/navigation'
 import { cn } from '../../utils/cn'
 
 export function Sidebar({ className, collapsed = false }) {
+  const logoSrc = `${import.meta.env.BASE_URL}fab619_logo.png`
+
   return (
     <aside className={cn('border-r border-border/60 bg-card/30 backdrop-blur supports-[backdrop-filter]:bg-card/20', className)}>
       <div className="flex h-full flex-col p-3">
         {collapsed ? (
           <div className="flex items-center justify-center">
-            <img src="/fab619_logo.png" alt="DocFlow" className="size-10 rounded-full object-cover" />
+            <img src={logoSrc} alt="DocFlow" className="size-10 rounded-full object-cover" />
           </div>
         ) : (
           <div className="flex items-center gap-2.5 px-1 py-1">
-            <img src="/fab619_logo.png" alt="DocFlow" className="size-10 shrink-0 rounded-full object-cover" />
+            <img src={logoSrc} alt="DocFlow" className="size-10 shrink-0 rounded-full object-cover" />
             <h1 className="text-sm font-bold tracking-tight">FAB619 - DocFlow</h1>
           </div>
         )}
