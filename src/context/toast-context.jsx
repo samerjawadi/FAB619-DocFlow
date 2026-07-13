@@ -36,16 +36,18 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             className={cn(
-              'pointer-events-auto flex min-w-72 max-w-md items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-lg animate-fade-in',
-              t.variant === 'destructive' && 'border-destructive/30 bg-destructive/5',
-              t.variant === 'success' && 'border-emerald-300 bg-emerald-50 dark:border-emerald-700/50 dark:bg-emerald-950/30',
+              'pointer-events-auto flex min-w-72 max-w-md items-center justify-between gap-3 rounded-xl border px-4 py-3 shadow-xl ring-1 ring-black/10 animate-fade-in',
+              t.variant === 'default' && 'border-slate-800 bg-slate-900 text-slate-100 dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900',
+              t.variant === 'destructive' && 'border-red-700 bg-red-700 text-white',
+              t.variant === 'success' && 'border-emerald-700 bg-emerald-700 text-white',
             )}
           >
             <p
               className={cn(
-                'text-sm text-foreground',
-                t.variant === 'destructive' && 'text-destructive',
-                t.variant === 'success' && 'text-emerald-800 dark:text-emerald-300',
+                'text-sm font-medium',
+                t.variant === 'default' && 'text-inherit',
+                t.variant === 'destructive' && 'text-white',
+                t.variant === 'success' && 'text-white',
               )}
             >
               {t.message}
@@ -55,7 +57,12 @@ export function ToastProvider({ children }) {
                 <button
                   type="button"
                   onClick={() => { t.action.onClick(); dismiss(t.id) }}
-                  className="text-sm font-semibold text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring"
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-sm font-semibold underline-offset-2 focus:outline-none focus:ring-2',
+                    t.variant === 'default' && 'text-inherit hover:underline focus:ring-slate-400 dark:focus:ring-slate-500',
+                    t.variant === 'destructive' && 'text-white hover:underline focus:ring-red-300',
+                    t.variant === 'success' && 'text-white hover:underline focus:ring-emerald-300',
+                  )}
                 >
                   {t.action.label}
                 </button>
@@ -64,7 +71,12 @@ export function ToastProvider({ children }) {
                 type="button"
                 onClick={() => dismiss(t.id)}
                 aria-label="Dismiss notification"
-                className="rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className={cn(
+                  'rounded-sm p-0.5 transition-colors focus:outline-none focus:ring-2',
+                  t.variant === 'default' && 'text-inherit/80 hover:text-inherit focus:ring-slate-400 dark:focus:ring-slate-500',
+                  t.variant === 'destructive' && 'text-white/85 hover:text-white focus:ring-red-300',
+                  t.variant === 'success' && 'text-white/85 hover:text-white focus:ring-emerald-300',
+                )}
               >
                 <X className="size-3.5" />
               </button>

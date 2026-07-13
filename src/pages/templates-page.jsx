@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DocumentEditorContainerComponent, Toolbar as DocumentEditorToolbar } from '@syncfusion/ej2-react-documenteditor'
-import { Copy, Files, Pencil, Plus, Search, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
+import { Copy, Files, Pencil, Plus, Search, ShieldCheck, Sparkles, Trash2, Upload } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -59,13 +59,16 @@ export function TemplatesPage() {
   const debouncedSearch = useDebounce(search, 250)
   const [pendingDelete, setPendingDelete] = useState(null)
   const [isEditorLoading, setIsEditorLoading] = useState(false)
+  const [isImportingDocx, setIsImportingDocx] = useState(false)
+  const [importStatus, setImportStatus] = useState('info')
   const [importMessage, setImportMessage] = useState('')
   const [editorReady, setEditorReady] = useState(false)
   const wordEditorRef = useRef(null)
+  const docxInputRef = useRef(null)
   const pendingSfdtRef = useRef(null)
   const deletedTemplateRef = useRef(null)
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({ defaultValues: templateDefaults })
+  const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm({ defaultValues: templateDefaults })
 
   const editingTemplate = useMemo(
     () => templates.find((t) => t.id === editingId) || null,
@@ -104,6 +107,7 @@ export function TemplatesPage() {
   const duplicateAndEdit = (template) => {
     setIsEditorLoading(false)
     setImportMessage('')
+    setImportStatus('info')
     pendingSfdtRef.current = template.sfdt || null
     setEditingId('new')
     reset({ name: `${template.name} (copy)`, description: template.description || '' })
@@ -112,6 +116,7 @@ export function TemplatesPage() {
   const openCreate = () => {
     setIsEditorLoading(false)
     setImportMessage('')
+    setImportStatus('info')
     pendingSfdtRef.current = null
     setEditingId('new')
     reset({ name: 'Untitled Template', description: 'Custom document template' })
@@ -120,9 +125,11 @@ export function TemplatesPage() {
   const startEdit = (template) => {
     setIsEditorLoading(false)
     setImportMessage('')
+    setImportStatus('info')
     setEditingId(template.id)
     reset({ name: template.name || '', description: template.description || '' })
     if (template.format !== 'sfdt' || !template.sfdt) {
+      setImportStatus('error')
       setImportMessage('This template uses an older format. Save to upgrade it.')
     }
   }
@@ -131,14 +138,23 @@ export function TemplatesPage() {
     setEditorReady(false)
     setEditingId('')
     setImportMessage('')
+    setImportStatus('info')
     setIsEditorLoading(false)
     reset(templateDefaults)
   }, [reset])
 
   const onSubmit = useCallback((values) => {
     const editor = wordEditorRef.current?.documentEditor
-    if (!editor) { setImportMessage('Editor is not ready. Please try again.'); return }
-    if (isEditorLoading) { setImportMessage('Please wait for the document to finish loading.'); return }
+    if (!editor) {
+      setImportStatus('error')
+      setImportMessage('Editor is not ready. Please try again.')
+      return
+    }
+    if (isEditorLoading) {
+      setImportStatus('error')
+      setImportMessage('Please wait for the document to finish loading.')
+      return
+    }
     try {
       const sfdt = editor.serialize()
       const payload = { name: values.name, description: values.description, format: 'sfdt', sfdt, content: '' }
@@ -151,12 +167,64 @@ export function TemplatesPage() {
       }
       cancelEdit()
     } catch {
+      setImportStatus('error')
       setImportMessage('Could not save this template. Please try again.')
       toast({ message: 'Could not save this template. Please try again.', variant: 'destructive' })
     }
   }, [wordEditorRef, isEditorLoading, editingTemplate, updateTemplate, addTemplate, cancelEdit, toast])
 
   const handleFormSubmit = useCallback((e) => handleSubmit(onSubmit)(e), [handleSubmit, onSubmit])
+
+  const triggerDocxImport = () => {
+    docxInputRef.current?.click()
+  }
+
+  const handleDocxImport = useCallback(async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    const editor = wordEditorRef.current?.documentEditor
+    if (!editor) {
+      setImportStatus('error')
+      setImportMessage('Editor is not ready. Please try again.')
+      return
+    }
+
+    setImportMessage('')
+    setIsEditorLoading(true)
+    setIsImportingDocx(true)
+
+    try {
+      editor.isReadOnly = false
+      if (typeof editor.openAsync === 'function') {
+        await editor.openAsync(file)
+      } else {
+        editor.open(file)
+      }
+
+      if (!editingTemplate) {
+        const currentName = (getValues('name') || '').trim()
+        if (!currentName || currentName === 'Untitled Template') {
+          const inferredName = file.name.replace(/\.[^.]+$/, '').trim()
+          if (inferredName) {
+            setValue('name', inferredName)
+          }
+        }
+      }
+
+      setImportStatus('success')
+      setImportMessage(`Loaded ${file.name}. You can edit it and save as a template.`)
+      toast({ message: `Loaded ${file.name} successfully.`, variant: 'success' })
+    } catch {
+      setImportStatus('error')
+      setImportMessage('Could not import this DOCX file. Please choose a valid .docx document.')
+      toast({ message: 'DOCX import failed. Please try another file.', variant: 'destructive' })
+    } finally {
+      setIsEditorLoading(false)
+      setIsImportingDocx(false)
+    }
+  }, [editingTemplate, getValues, setValue, toast])
 
   const confirmDelete = () => {
     if (!pendingDelete) return
@@ -313,6 +381,18 @@ export function TemplatesPage() {
 
                   {/* Save / Cancel — top for quick access */}
                   <div className="flex justify-end gap-2">
+                    <input
+                      ref={docxInputRef}
+                      type="file"
+                      accept=".docx"
+                      onChange={handleDocxImport}
+                      className="hidden"
+                      aria-label="Import DOCX template"
+                    />
+                    <Button type="button" variant="outline" onClick={triggerDocxImport} disabled={isEditorLoading || isImportingDocx}>
+                      <Upload className="size-4" />
+                      {isImportingDocx ? 'Importing…' : 'Import DOCX'}
+                    </Button>
                     <Button type="button" variant="outline" onClick={cancelEdit}>
                       Cancel
                     </Button>
@@ -363,7 +443,16 @@ export function TemplatesPage() {
                   </div>
 
                   {importMessage && (
-                    <p className="text-sm text-warning">{importMessage}</p>
+                    <p
+                      className={cn(
+                        'rounded-md border px-3 py-2 text-sm',
+                        importStatus === 'success'
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-950/30 dark:text-emerald-300'
+                          : 'border-warning/40 bg-warning/10 text-warning-foreground',
+                      )}
+                    >
+                      {importMessage}
+                    </p>
                   )}
                 </form>
               ) : (
