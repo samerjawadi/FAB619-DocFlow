@@ -12,16 +12,44 @@ function createId(prefix) {
 
 export function AppDataProvider({ children }) {
   const [workers, setWorkers] = useState(() => workerService.listWorkers())
-  const [templates, setTemplates] = useState(() => templateService.listTemplates())
+  const [templates, setTemplates] = useState([])
+  const [templatesHydrated, setTemplatesHydrated] = useState(false)
   const [history, setHistory] = useState(() => historyService.listEntries())
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadTemplates() {
+      try {
+        const items = await templateService.listTemplates()
+        if (!isMounted) return
+        setTemplates(items)
+      } catch (error) {
+        console.error('Could not load templates.', error)
+      } finally {
+        if (isMounted) {
+          setTemplatesHydrated(true)
+        }
+      }
+    }
+
+    loadTemplates()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     workerService.saveWorkers(workers)
   }, [workers])
 
   useEffect(() => {
-    templateService.saveTemplates(templates)
-  }, [templates])
+    if (!templatesHydrated) return
+    templateService.saveTemplates(templates).catch((error) => {
+      console.error('Could not persist templates.', error)
+    })
+  }, [templates, templatesHydrated])
 
   useEffect(() => {
     historyService.saveEntries(history)
