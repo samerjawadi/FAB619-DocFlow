@@ -3,24 +3,45 @@ import { lazy } from 'react'
 import { Link, createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router-dom'
 import { AppLayout } from '../layouts/app-layout'
 import { NotFoundPage } from '../pages/not-found-page'
+import { SettingsPage } from '../pages/settings-page'
 import { Button } from '../components/ui/button'
 
 function lazyWithRetry(importer) {
   return lazy(async () => {
     try {
       const module = await importer()
-      sessionStorage.removeItem('docflow:lazy-retried')
+      sessionStorage.removeItem('docflow:lazy-retry')
       return module
     } catch (error) {
+      const retryKey = 'docflow:lazy-retry'
       const message = error instanceof Error ? error.message : String(error)
+      const isChunkLoadErrorByName = error instanceof Error && error.name === 'ChunkLoadError'
       const isChunkFetchError =
+        isChunkLoadErrorByName ||
         message.includes('Failed to fetch dynamically imported module') ||
-        message.includes('Importing a module script failed')
+        message.includes('Importing a module script failed') ||
+        /dynamically imported module/i.test(message) ||
+        /Loading chunk [\d]+ failed/i.test(message)
+
+      let shouldRetry = false
+      const previousRetryRaw = sessionStorage.getItem(retryKey)
+      if (!previousRetryRaw) {
+        shouldRetry = true
+      } else {
+        try {
+          const previousRetry = JSON.parse(previousRetryRaw)
+          const expired = Date.now() - Number(previousRetry.ts || 0) > 60000
+          const differentPath = previousRetry.path !== window.location.pathname
+          shouldRetry = expired || differentPath
+        } catch {
+          shouldRetry = true
+        }
+      }
 
       // GitHub Pages can serve stale index.html that references old chunk hashes.
       // Force one refresh to fetch the latest HTML/chunk map before surfacing an error.
-      if (isChunkFetchError && !sessionStorage.getItem('docflow:lazy-retried')) {
-        sessionStorage.setItem('docflow:lazy-retried', '1')
+      if (isChunkFetchError && shouldRetry) {
+        sessionStorage.setItem(retryKey, JSON.stringify({ ts: Date.now(), path: window.location.pathname }))
         window.location.reload()
         return new Promise(() => {})
       }
@@ -66,7 +87,6 @@ const GeneratePage = lazyWithRetry(() => import('../pages/generate-page').then((
 const WorkersPage = lazyWithRetry(() => import('../pages/workers-page').then((m) => ({ default: m.WorkersPage })))
 const TemplatesPage = lazyWithRetry(() => import('../pages/templates-page').then((m) => ({ default: m.TemplatesPage })))
 const HistoryPage = lazyWithRetry(() => import('../pages/history-page').then((m) => ({ default: m.HistoryPage })))
-const SettingsPage = lazyWithRetry(() => import('../pages/settings-page').then((m) => ({ default: m.SettingsPage })))
 
 export const router = createBrowserRouter([
   {
