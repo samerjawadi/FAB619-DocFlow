@@ -1,7 +1,21 @@
-const unavailableCollections = new Set()
+const unavailableCollections = new Map()
 
 export function canUseRemoteCollection(collectionName) {
-  return !unavailableCollections.has(collectionName)
+  const state = unavailableCollections.get(collectionName)
+  if (!state) return true
+
+  // Missing default Firestore DB is a hard failure until app/project config changes.
+  if (state.reason === 'missing-database') {
+    return false
+  }
+
+  // Permission issues are treated as temporary to allow automatic recovery.
+  if (Date.now() < state.retryAfter) {
+    return false
+  }
+
+  unavailableCollections.delete(collectionName)
+  return true
 }
 
 export function markCollectionUnavailable(collectionName, error) {
@@ -14,7 +28,8 @@ export function markCollectionUnavailable(collectionName, error) {
     return false
   }
 
-  if (!unavailableCollections.has(collectionName)) {
+  const current = unavailableCollections.get(collectionName)
+  if (!current) {
     if (isPermissionDenied) {
       console.warn(`Firestore access denied for ${collectionName}. Falling back to local storage.`)
     } else {
@@ -22,6 +37,11 @@ export function markCollectionUnavailable(collectionName, error) {
     }
   }
 
-  unavailableCollections.add(collectionName)
+  if (isMissingDatabase) {
+    unavailableCollections.set(collectionName, { reason: 'missing-database', retryAfter: Number.POSITIVE_INFINITY })
+  } else {
+    unavailableCollections.set(collectionName, { reason: 'permission-denied', retryAfter: Date.now() + 30000 })
+  }
+
   return true
 }
